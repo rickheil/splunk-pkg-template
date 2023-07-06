@@ -1,0 +1,30 @@
+#!/bin/zsh
+exec >/var/log/splunkinstaller.log 2>&1
+
+SERIAL_NUMBER=$(ioreg -l | grep IOPlatformSerialNumber | cut -d"=" -f2 | tr -d '\" ')
+SPLUNK_BINARY="/var/splunkforwarder/bin/splunk"
+
+do_it() {
+    echo "[$(date +%Y.%m.%d-%H:%M:%S)][Splunk_UFW_Mac_Installer] " "$@"
+    eval "$@"
+}
+
+check_old_install() {
+    # Check to see if the user-mode installer has been used - if so, nuke it.
+    if [ -d "/Applications/splunkforwarder" ]; then
+        do_it "/Applications/splunkforwarder/bin/splunk stop"
+        do_it "/Applications/splunkforwarder/bin/splunk disable boot-start"
+        do_it "rm -r /Applications/splunkforwarder"
+    fi
+}
+
+stop_splunk_forwarder() {
+    # Stops the forwarder if one is running already from the /var location
+    if [ -d /var/splunkforwarder ]; then
+        do_it "$SPLUNK_BINARY stop"
+        do_it "/bin/launchctl unload /Library/LaunchDaemons/com.splunk.plist"
+    fi
+}
+
+check_old_install
+stop_splunk_forwarder

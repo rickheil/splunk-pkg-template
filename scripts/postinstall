@@ -1,0 +1,31 @@
+#!/bin/zsh
+exec >/var/log/splunkinstaller.log 2>&1
+
+SERIAL_NUMBER=$(ioreg -l | grep IOPlatformSerialNumber | cut -d"=" -f2 | tr -d '\" ')
+SPLUNK_BINARY="/var/splunkforwarder/bin/splunk"
+SYSLOCAL=/var/splunkforwarder/etc/system/local
+
+do_it() {
+    echo "[$(date +%Y.%m.%d-%H:%M:%S)][Splunk_UFW_Mac_Installer] " "$@"
+    eval "$@"
+}
+
+add_hostname() {
+    do_it "echo \"[default]\" > $SYSLOCAL/inputs.conf"
+    do_it "echo \"host = $SERIAL_NUMBER\" >> $SYSLOCAL/inputs.conf"
+}
+
+create_user_seed() {
+    # these commands purposefully not logged to avoid printing the password to logs
+    PASSWORD=$($SPLUNK_BINARY hash-passwd $(/usr/bin/uuidgen))
+    echo "HASHED_PASSWORD=$PASSWORD" >> $SYSLOCAL/user_seed.conf
+}
+
+start_splunk() {
+    do_it "$SPLUNK_BINARY start --accept-license --answer-yes --no-prompt"
+    do_it "/bin/launchctl load /Library/LaunchDaemons/com.splunk.plist"
+}
+
+add_hostname
+create_user_seed
+start_splunk

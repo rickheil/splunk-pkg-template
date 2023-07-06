@@ -1,0 +1,6 @@
+.	40755	0/0
+./Library	40755	0/0
+./Library/LaunchDaemons	40755	0/0
+./Library/LaunchDaemons/com.splunk.plist	100644	0/0	506	2593830518
+./var	40755	0/0
+./var/splunkforwarder	40755	0/0
